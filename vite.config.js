@@ -11,5 +11,11 @@ export default defineConfig({
   },
   server: {
     port: 3000
+  },
+  build:{
+	index:path.resolve(_dirname,'../dist/index.html'),
+	assetsRoot:path.resolve(_dirname,'../dist'),
+	assetsSubDiretctory:'static',
+	assetsPublicPath:'./',
   }
 })
