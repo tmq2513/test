@@ -1,0 +1,568 @@
+<template>
+  <div class="external-params-container">
+    <el-card>
+      <el-tabs v-model="activeTab" type="border-card">
+        <!-- 社保参数 -->
+        <el-tab-pane label="社保参数" name="social">
+          <div class="tab-content">
+            <div class="card-header">
+              <h3>社保参数管理</h3>
+              <el-button type="primary" @click="handleAddSocial">新增</el-button>
+            </div>
+
+            <el-table :data="socialSecurityList" style="width: 100%">
+              <el-table-column prop="id" label="ID" width="60" />
+              <el-table-column prop="name" label="社保名称" width="150" />
+              <el-table-column prop="centerCode" label="中心编码" width="120" />
+              <el-table-column prop="province" label="省" width="100" />
+              <el-table-column prop="provinceCode" label="省区域码" width="100" />
+              <el-table-column prop="city" label="市" width="100" />
+              <el-table-column prop="cityCode" label="市区域码" width="100" />
+              <el-table-column label="操作" width="150">
+                <template #default="scope">
+                  <el-button type="primary" size="small" @click="handleEditSocial(scope.row)">编辑</el-button>
+                  <el-button type="danger" size="small" @click="handleDeleteSocial(scope.row)">删除</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+        </el-tab-pane>
+
+        <!-- 地税参数 -->
+        <el-tab-pane label="地税参数" name="tax">
+          <div class="tab-content">
+            <div class="card-header">
+              <h3>地税参数管理</h3>
+              <el-button type="primary" @click="handleAddTax">新增</el-button>
+            </div>
+
+            <el-table :data="taxList" style="width: 100%">
+              <el-table-column prop="id" label="ID" width="60" />
+              <el-table-column prop="name" label="地税名称" width="150" />
+              <el-table-column prop="centerCode" label="中心编码" width="120" />
+              <el-table-column prop="province" label="省" width="100" />
+              <el-table-column prop="provinceCode" label="省区域码" width="100" />
+              <el-table-column prop="city" label="市" width="100" />
+              <el-table-column prop="cityCode" label="市区域码" width="100" />
+              <el-table-column label="操作" width="150">
+                <template #default="scope">
+                  <el-button type="primary" size="small" @click="handleEditTax(scope.row)">编辑</el-button>
+                  <el-button type="danger" size="small" @click="handleDeleteTax(scope.row)">删除</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+        </el-tab-pane>
+
+        <!-- 公积金参数 -->
+        <el-tab-pane label="公积金参数" name="fund">
+          <div class="tab-content">
+            <div class="card-header">
+              <h3>公积金参数管理</h3>
+              <el-button type="primary" @click="handleAddFund">新增</el-button>
+            </div>
+
+            <el-table :data="fundList" style="width: 100%">
+              <el-table-column prop="id" label="ID" width="60" />
+              <el-table-column prop="name" label="公积金中心名称" width="180" />
+              <el-table-column prop="centerCode" label="中心编码" width="120" />
+              <el-table-column prop="province" label="省" width="100" />
+              <el-table-column prop="provinceCode" label="省区域码" width="100" />
+              <el-table-column prop="city" label="市" width="100" />
+              <el-table-column prop="cityCode" label="市区域码" width="100" />
+              <el-table-column label="操作" width="150">
+                <template #default="scope">
+                  <el-button type="primary" size="small" @click="handleEditFund(scope.row)">编辑</el-button>
+                  <el-button type="danger" size="small" @click="handleDeleteFund(scope.row)">删除</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+        </el-tab-pane>
+      </el-tabs>
+    </el-card>
+
+    <!-- 社保对话框 -->
+    <el-dialog v-model="socialDialogVisible" :title="socialDialogTitle" width="600px">
+      <el-form :model="socialFormData" label-width="120px">
+        <el-form-item label="社保名称" required>
+          <el-input v-model="socialFormData.name" placeholder="请输入社保名称" />
+        </el-form-item>
+        <el-form-item label="中心编码" required>
+          <el-input v-model="socialFormData.centerCode" placeholder="请输入中心编码" />
+        </el-form-item>
+        <el-form-item label="省" required>
+          <el-select v-model="socialFormData.province" placeholder="请选择省" @change="handleSocialProvinceChange">
+            <el-option v-for="province in provinces" :key="province.code" :label="province.name" :value="province.name" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="省区域码">
+          <el-input v-model="socialFormData.provinceCode" readonly />
+        </el-form-item>
+        <el-form-item label="市" required>
+          <el-select v-model="socialFormData.city" placeholder="请选择市" :disabled="!socialFormData.province" @change="handleSocialCityChange">
+            <el-option v-for="city in socialCities" :key="city.code" :label="city.name" :value="city.name" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="市区域码">
+          <el-input v-model="socialFormData.cityCode" readonly />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="socialDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleSocialSubmit">确定</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 地税对话框 -->
+    <el-dialog v-model="taxDialogVisible" :title="taxDialogTitle" width="600px">
+      <el-form :model="taxFormData" label-width="120px">
+        <el-form-item label="地税名称" required>
+          <el-input v-model="taxFormData.name" placeholder="请输入地税名称" />
+        </el-form-item>
+        <el-form-item label="中心编码" required>
+          <el-input v-model="taxFormData.centerCode" placeholder="请输入中心编码" />
+        </el-form-item>
+        <el-form-item label="省" required>
+          <el-select v-model="taxFormData.province" placeholder="请选择省" @change="handleTaxProvinceChange">
+            <el-option v-for="province in provinces" :key="province.code" :label="province.name" :value="province.name" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="省区域码">
+          <el-input v-model="taxFormData.provinceCode" readonly />
+        </el-form-item>
+        <el-form-item label="市" required>
+          <el-select v-model="taxFormData.city" placeholder="请选择市" :disabled="!taxFormData.province" @change="handleTaxCityChange">
+            <el-option v-for="city in taxCities" :key="city.code" :label="city.name" :value="city.name" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="市区域码">
+          <el-input v-model="taxFormData.cityCode" readonly />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="taxDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleTaxSubmit">确定</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 公积金对话框 -->
+    <el-dialog v-model="fundDialogVisible" :title="fundDialogTitle" width="600px">
+      <el-form :model="fundFormData" label-width="120px">
+        <el-form-item label="公积金中心名称" required>
+          <el-input v-model="fundFormData.name" placeholder="请输入公积金中心名称" />
+        </el-form-item>
+        <el-form-item label="中心编码" required>
+          <el-input v-model="fundFormData.centerCode" placeholder="请输入中心编码" />
+        </el-form-item>
+        <el-form-item label="省" required>
+          <el-select v-model="fundFormData.province" placeholder="请选择省" @change="handleFundProvinceChange">
+            <el-option v-for="province in provinces" :key="province.code" :label="province.name" :value="province.name" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="省区域码">
+          <el-input v-model="fundFormData.provinceCode" readonly />
+        </el-form-item>
+        <el-form-item label="市" required>
+          <el-select v-model="fundFormData.city" placeholder="请选择市" :disabled="!fundFormData.province" @change="handleFundCityChange">
+            <el-option v-for="city in fundCities" :key="city.code" :label="city.name" :value="city.name" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="市区域码">
+          <el-input v-model="fundFormData.cityCode" readonly />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="fundDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleFundSubmit">确定</el-button>
+      </template>
+    </el-dialog>
+  </div>
+</template>
+
+<script setup>
+import { ref, reactive, computed } from 'vue'
+import { ElMessage } from 'element-plus'
+
+const activeTab = ref('social')
+
+const provinces = [
+  { name: '北京', code: '110000', cities: [{ name: '北京', code: '110100' }] },
+  { name: '天津', code: '120000', cities: [{ name: '天津', code: '120100' }] },
+  { name: '河北', code: '130000', cities: [{ name: '石家庄', code: '130100' }, { name: '唐山', code: '130200' }, { name: '秦皇岛', code: '130300' }, { name: '邯郸', code: '130400' }, { name: '邢台', code: '130500' }, { name: '保定', code: '130600' }, { name: '张家口', code: '130700' }, { name: '承德', code: '130800' }, { name: '沧州', code: '130900' }, { name: '廊坊', code: '131000' }, { name: '衡水', code: '131100' }] },
+  { name: '山西', code: '140000', cities: [{ name: '太原', code: '140100' }, { name: '大同', code: '140200' }, { name: '阳泉', code: '140300' }, { name: '长治', code: '140400' }, { name: '晋城', code: '140500' }, { name: '朔州', code: '140600' }, { name: '晋中', code: '140700' }, { name: '运城', code: '140800' }, { name: '忻州', code: '140900' }, { name: '临汾', code: '141000' }, { name: '吕梁', code: '141100' }] },
+  { name: '内蒙古', code: '150000', cities: [{ name: '呼和浩特', code: '150100' }, { name: '包头', code: '150200' }, { name: '乌海', code: '150300' }, { name: '赤峰', code: '150400' }, { name: '通辽', code: '150500' }, { name: '鄂尔多斯', code: '150600' }, { name: '呼伦贝尔', code: '150700' }, { name: '巴彦淖尔', code: '150800' }, { name: '乌兰察布', code: '150900' }, { name: '兴安盟', code: '152200' }, { name: '锡林郭勒盟', code: '152500' }, { name: '阿拉善盟', code: '152900' }] },
+  { name: '辽宁', code: '210000', cities: [{ name: '沈阳', code: '210100' }, { name: '大连', code: '210200' }, { name: '鞍山', code: '210300' }, { name: '抚顺', code: '210400' }, { name: '本溪', code: '210500' }, { name: '丹东', code: '210600' }, { name: '锦州', code: '210700' }, { name: '营口', code: '210800' }, { name: '阜新', code: '210900' }, { name: '辽阳', code: '211000' }, { name: '盘锦', code: '211100' }, { name: '铁岭', code: '211200' }, { name: '朝阳', code: '211300' }, { name: '葫芦岛', code: '211400' }] },
+  { name: '吉林', code: '220000', cities: [{ name: '长春', code: '220100' }, { name: '吉林', code: '220200' }, { name: '四平', code: '220300' }, { name: '辽源', code: '220400' }, { name: '通化', code: '220500' }, { name: '白山', code: '220600' }, { name: '松原', code: '220700' }, { name: '白城', code: '220800' }, { name: '延边朝鲜族自治州', code: '222400' }] },
+  { name: '黑龙江', code: '230000', cities: [{ name: '哈尔滨', code: '230100' }, { name: '齐齐哈尔', code: '230200' }, { name: '鸡西', code: '230300' }, { name: '鹤岗', code: '230400' }, { name: '双鸭山', code: '230500' }, { name: '大庆', code: '230600' }, { name: '伊春', code: '230700' }, { name: '佳木斯', code: '230800' }, { name: '七台河', code: '230900' }, { name: '牡丹江', code: '231000' }, { name: '黑河', code: '231100' }, { name: '绥化', code: '231200' }, { name: '大兴安岭地区', code: '232700' }] },
+  { name: '上海', code: '310000', cities: [{ name: '上海', code: '310100' }] },
+  { name: '江苏', code: '320000', cities: [{ name: '南京', code: '320100' }, { name: '无锡', code: '320200' }, { name: '徐州', code: '320300' }, { name: '常州', code: '320400' }, { name: '苏州', code: '320500' }, { name: '南通', code: '320600' }, { name: '连云港', code: '320700' }, { name: '淮安', code: '320800' }, { name: '盐城', code: '320900' }, { name: '扬州', code: '321000' }, { name: '镇江', code: '321100' }, { name: '泰州', code: '321200' }, { name: '宿迁', code: '321300' }] },
+  { name: '浙江', code: '330000', cities: [{ name: '杭州', code: '330100' }, { name: '宁波', code: '330200' }, { name: '温州', code: '330300' }, { name: '嘉兴', code: '330400' }, { name: '湖州', code: '330500' }, { name: '绍兴', code: '330600' }, { name: '金华', code: '330700' }, { name: '衢州', code: '330800' }, { name: '舟山', code: '330900' }, { name: '台州', code: '331000' }, { name: '丽水', code: '331100' }] },
+  { name: '安徽', code: '340000', cities: [{ name: '合肥', code: '340100' }, { name: '芜湖', code: '340200' }, { name: '蚌埠', code: '340300' }, { name: '淮南', code: '340400' }, { name: '马鞍山', code: '340500' }, { name: '淮北', code: '340600' }, { name: '铜陵', code: '340700' }, { name: '安庆', code: '340800' }, { name: '黄山', code: '341000' }, { name: '滁州', code: '341100' }, { name: '阜阳', code: '341200' }, { name: '宿州', code: '341300' }, { name: '六安', code: '341500' }, { name: '亳州', code: '341600' }, { name: '池州', code: '341700' }, { name: '宣城', code: '341800' }] },
+  { name: '福建', code: '350000', cities: [{ name: '福州', code: '350100' }, { name: '厦门', code: '350200' }, { name: '莆田', code: '350300' }, { name: '三明', code: '350400' }, { name: '泉州', code: '350500' }, { name: '漳州', code: '350600' }, { name: '南平', code: '350700' }, { name: '龙岩', code: '350800' }, { name: '宁德', code: '350900' }] },
+  { name: '江西', code: '360000', cities: [{ name: '南昌', code: '360100' }, { name: '景德镇', code: '360200' }, { name: '萍乡', code: '360300' }, { name: '九江', code: '360400' }, { name: '新余', code: '360500' }, { name: '鹰潭', code: '360600' }, { name: '赣州', code: '360700' }, { name: '吉安', code: '360800' }, { name: '宜春', code: '360900' }, { name: '抚州', code: '361000' }, { name: '上饶', code: '361100' }] },
+  { name: '山东', code: '370000', cities: [{ name: '济南', code: '370100' }, { name: '青岛', code: '370200' }, { name: '淄博', code: '370300' }, { name: '枣庄', code: '370400' }, { name: '东营', code: '370500' }, { name: '烟台', code: '370600' }, { name: '潍坊', code: '370700' }, { name: '济宁', code: '370800' }, { name: '泰安', code: '370900' }, { name: '威海', code: '371000' }, { name: '日照', code: '371100' }, { name: '莱芜', code: '371200' }, { name: '临沂', code: '371300' }, { name: '德州', code: '371400' }, { name: '聊城', code: '371500' }, { name: '滨州', code: '371600' }, { name: '菏泽', code: '371700' }] },
+  { name: '河南', code: '410000', cities: [{ name: '郑州', code: '410100' }, { name: '开封', code: '410200' }, { name: '洛阳', code: '410300' }, { name: '平顶山', code: '410400' }, { name: '安阳', code: '410500' }, { name: '鹤壁', code: '410600' }, { name: '新乡', code: '410700' }, { name: '焦作', code: '410800' }, { name: '濮阳', code: '410900' }, { name: '许昌', code: '411000' }, { name: '漯河', code: '411100' }, { name: '三门峡', code: '411200' }, { name: '南阳', code: '411300' }, { name: '商丘', code: '411400' }, { name: '信阳', code: '411500' }, { name: '周口', code: '411600' }, { name: '驻马店', code: '411700' }, { name: '济源', code: '419001' }] },
+  { name: '湖北', code: '420000', cities: [{ name: '武汉', code: '420100' }, { name: '黄石', code: '420200' }, { name: '十堰', code: '420300' }, { name: '宜昌', code: '420500' }, { name: '襄阳', code: '420600' }, { name: '鄂州', code: '420700' }, { name: '荆门', code: '420800' }, { name: '孝感', code: '420900' }, { name: '荆州', code: '421000' }, { name: '黄冈', code: '421100' }, { name: '咸宁', code: '421200' }, { name: '随州', code: '421300' }, { name: '恩施土家族苗族自治州', code: '422800' }, { name: '仙桃', code: '429004' }, { name: '潜江', code: '429005' }, { name: '天门', code: '429006' }] },
+  { name: '湖南', code: '430000', cities: [{ name: '长沙', code: '430100' }, { name: '株洲', code: '430200' }, { name: '湘潭', code: '430300' }, { name: '衡阳', code: '430400' }, { name: '邵阳', code: '430500' }, { name: '岳阳', code: '430600' }, { name: '常德', code: '430700' }, { name: '张家界', code: '430800' }, { name: '益阳', code: '430900' }, { name: '郴州', code: '431000' }, { name: '永州', code: '431100' }, { name: '怀化', code: '431200' }, { name: '娄底', code: '431300' }, { name: '湘西土家族苗族自治州', code: '433100' }] },
+  { name: '广东', code: '440000', cities: [{ name: '广州', code: '440100' }, { name: '韶关', code: '440200' }, { name: '深圳', code: '440300' }, { name: '珠海', code: '440400' }, { name: '汕头', code: '440500' }, { name: '佛山', code: '440600' }, { name: '江门', code: '440700' }, { name: '湛江', code: '440800' }, { name: '茂名', code: '440900' }, { name: '肇庆', code: '441200' }, { name: '惠州', code: '441300' }, { name: '梅州', code: '441400' }, { name: '汕尾', code: '441500' }, { name: '河源', code: '441600' }, { name: '阳江', code: '441700' }, { name: '清远', code: '441800' }, { name: '东莞', code: '441900' }, { name: '中山', code: '442000' }, { name: '潮州', code: '445100' }, { name: '揭阳', code: '445200' }, { name: '云浮', code: '445300' }] },
+  { name: '广西', code: '450000', cities: [{ name: '南宁', code: '450100' }, { name: '柳州', code: '450200' }, { name: '桂林', code: '450300' }, { name: '梧州', code: '450400' }, { name: '北海', code: '450500' }, { name: '防城港', code: '450600' }, { name: '钦州', code: '450700' }, { name: '贵港', code: '450800' }, { name: '玉林', code: '450900' }, { name: '百色', code: '451000' }, { name: '贺州', code: '451100' }, { name: '河池', code: '451200' }, { name: '来宾', code: '451300' }, { name: '崇左', code: '451400' }] },
+  { name: '海南', code: '460000', cities: [{ name: '海口', code: '460100' }, { name: '三亚', code: '460200' }, { name: '三沙', code: '460300' }, { name: '儋州', code: '460400' }] },
+  { name: '重庆', code: '500000', cities: [{ name: '重庆', code: '500100' }] },
+  { name: '四川', code: '510000', cities: [{ name: '成都', code: '510100' }, { name: '自贡', code: '510300' }, { name: '攀枝花', code: '510400' }, { name: '泸州', code: '510500' }, { name: '德阳', code: '510600' }, { name: '绵阳', code: '510700' }, { name: '广元', code: '510800' }, { name: '遂宁', code: '510900' }, { name: '内江', code: '511000' }, { name: '乐山', code: '511100' }, { name: '南充', code: '511300' }, { name: '眉山', code: '511400' }, { name: '宜宾', code: '511500' }, { name: '广安', code: '511600' }, { name: '达州', code: '511700' }, { name: '雅安', code: '511800' }, { name: '巴中', code: '511900' }, { name: '资阳', code: '512000' }, { name: '阿坝藏族羌族自治州', code: '513200' }, { name: '甘孜藏族自治州', code: '513300' }, { name: '凉山彝族自治州', code: '513400' }] },
+  { name: '贵州', code: '520000', cities: [{ name: '贵阳', code: '520100' }, { name: '六盘水', code: '520200' }, { name: '遵义', code: '520300' }, { name: '安顺', code: '520400' }, { name: '毕节', code: '520500' }, { name: '铜仁', code: '520600' }, { name: '黔西南布依族苗族自治州', code: '522300' }, { name: '黔东南苗族侗族自治州', code: '522600' }, { name: '黔南布依族苗族自治州', code: '522700' }] },
+  { name: '云南', code: '530000', cities: [{ name: '昆明', code: '530100' }, { name: '曲靖', code: '530300' }, { name: '玉溪', code: '530400' }, { name: '保山', code: '530500' }, { name: '昭通', code: '530600' }, { name: '丽江', code: '530700' }, { name: '普洱', code: '530800' }, { name: '临沧', code: '530900' }, { name: '楚雄彝族自治州', code: '532300' }, { name: '红河哈尼族彝族自治州', code: '532500' }, { name: '文山壮族苗族自治州', code: '532600' }, { name: '西双版纳傣族自治州', code: '532800' }, { name: '大理白族自治州', code: '532900' }, { name: '德宏傣族景颇族自治州', code: '533100' }, { name: '怒江傈僳族自治州', code: '533300' }, { name: '迪庆藏族自治州', code: '533400' }] },
+  { name: '西藏', code: '540000', cities: [{ name: '拉萨', code: '540100' }, { name: '昌都', code: '540300' }, { name: '山南', code: '540500' }, { name: '日喀则', code: '540200' }, { name: '那曲', code: '540600' }, { name: '阿里', code: '542500' }, { name: '林芝', code: '540400' }] },
+  { name: '陕西', code: '610000', cities: [{ name: '西安', code: '610100' }, { name: '铜川', code: '610200' }, { name: '宝鸡', code: '610300' }, { name: '咸阳', code: '610400' }, { name: '渭南', code: '610500' }, { name: '延安', code: '610600' }, { name: '汉中', code: '610700' }, { name: '榆林', code: '610800' }, { name: '安康', code: '610900' }, { name: '商洛', code: '611000' }] },
+  { name: '甘肃', code: '620000', cities: [{ name: '兰州', code: '620100' }, { name: '嘉峪关', code: '620200' }, { name: '金昌', code: '620300' }, { name: '白银', code: '620400' }, { name: '天水', code: '620500' }, { name: '酒泉', code: '620600' }, { name: '张掖', code: '620700' }, { name: '武威', code: '620800' }, { name: '定西', code: '621100' }, { name: '陇南', code: '621200' }, { name: '平凉', code: '620800' }, { name: '庆阳', code: '621000' }, { name: '临夏回族自治州', code: '622900' }, { name: '甘南藏族自治州', code: '623000' }] },
+  { name: '青海', code: '630000', cities: [{ name: '西宁', code: '630100' }, { name: '海东', code: '630200' }, { name: '海北藏族自治州', code: '632200' }, { name: '黄南藏族自治州', code: '632300' }, { name: '海南藏族自治州', code: '632500' }, { name: '果洛藏族自治州', code: '632600' }, { name: '玉树藏族自治州', code: '632700' }, { name: '海西蒙古族藏族自治州', code: '632800' }] },
+  { name: '宁夏', code: '640000', cities: [{ name: '银川', code: '640100' }, { name: '石嘴山', code: '640200' }, { name: '吴忠', code: '640300' }, { name: '固原', code: '640400' }, { name: '中卫', code: '640500' }] },
+  { name: '新疆', code: '650000', cities: [{ name: '乌鲁木齐', code: '650100' }, { name: '克拉玛依', code: '650200' }, { name: '吐鲁番', code: '650400' }, { name: '哈密', code: '650500' }, { name: '昌吉回族自治州', code: '652300' }, { name: '博尔塔拉蒙古自治州', code: '652700' }, { name: '巴音郭楞蒙古自治州', code: '652800' }, { name: '阿克苏', code: '652900' }, { name: '克孜勒苏柯尔克孜自治州', code: '653000' }, { name: '喀什', code: '653100' }, { name: '和田', code: '653200' }, { name: '伊犁哈萨克自治州', code: '654000' }, { name: '塔城', code: '654200' }, { name: '阿勒泰', code: '654300' }, { name: '石河子', code: '659001' }, { name: '阿拉尔', code: '659002' }, { name: '图木舒克', code: '659003' }, { name: '五家渠', code: '659004' }, { name: '北屯', code: '659005' }, { name: '铁门关', code: '659006' }, { name: '双河', code: '659007' }, { name: '可克达拉', code: '659008' }, { name: '昆玉', code: '659009' }] },
+  { name: '香港', code: '810000', cities: [{ name: '香港', code: '810100' }] },
+  { name: '澳门', code: '820000', cities: [{ name: '澳门', code: '820100' }] },
+  { name: '台湾', code: '710000', cities: [{ name: '台北', code: '710100' }, { name: '高雄', code: '710200' }, { name: '台中', code: '710300' }, { name: '台南', code: '710400' }, { name: '基隆', code: '710500' }] }
+]
+
+// 社保数据
+const socialSecurityList = ref([
+  { id: 1, name: '北京市社会保险管理中心', centerCode: 'BJ001', province: '北京', provinceCode: '110000', city: '北京', cityCode: '110100' },
+  { id: 2, name: '上海市社会保险事业管理中心', centerCode: 'SH001', province: '上海', provinceCode: '310000', city: '上海', cityCode: '310100' },
+  { id: 3, name: '广州市社会保险基金管理中心', centerCode: 'GZ001', province: '广东', provinceCode: '440000', city: '广州', cityCode: '440100' }
+])
+
+const socialDialogVisible = ref(false)
+const socialDialogTitle = ref('新增')
+const socialFormData = reactive({
+  id: null,
+  name: '',
+  centerCode: '',
+  province: '',
+  provinceCode: '',
+  city: '',
+  cityCode: ''
+})
+
+const socialCities = computed(() => {
+  const province = provinces.find(p => p.name === socialFormData.province)
+  return province ? province.cities : []
+})
+
+const handleAddSocial = () => {
+  socialDialogTitle.value = '新增'
+  socialFormData.id = null
+  socialFormData.name = ''
+  socialFormData.centerCode = ''
+  socialFormData.province = ''
+  socialFormData.provinceCode = ''
+  socialFormData.city = ''
+  socialFormData.cityCode = ''
+  socialDialogVisible.value = true
+}
+
+const handleEditSocial = (row) => {
+  socialDialogTitle.value = '编辑'
+  socialFormData.id = row.id
+  socialFormData.name = row.name
+  socialFormData.centerCode = row.centerCode
+  socialFormData.province = row.province
+  socialFormData.provinceCode = row.provinceCode
+  socialFormData.city = row.city
+  socialFormData.cityCode = row.cityCode
+  socialDialogVisible.value = true
+}
+
+const handleDeleteSocial = (row) => {
+  const index = socialSecurityList.value.findIndex(item => item.id === row.id)
+  if (index !== -1) {
+    socialSecurityList.value.splice(index, 1)
+    ElMessage.success('删除成功')
+  }
+}
+
+const handleSocialProvinceChange = () => {
+  const province = provinces.find(p => p.name === socialFormData.province)
+  if (province) {
+    socialFormData.provinceCode = province.code
+    socialFormData.city = ''
+    socialFormData.cityCode = ''
+  }
+}
+
+const handleSocialCityChange = () => {
+  const province = provinces.find(p => p.name === socialFormData.province)
+  if (province) {
+    const city = province.cities.find(c => c.name === socialFormData.city)
+    if (city) {
+      socialFormData.cityCode = city.code
+    }
+  }
+}
+
+const handleSocialSubmit = () => {
+  if (!socialFormData.name) {
+    ElMessage.warning('请输入社保名称')
+    return
+  }
+  if (!socialFormData.centerCode) {
+    ElMessage.warning('请输入中心编码')
+    return
+  }
+  if (!socialFormData.province) {
+    ElMessage.warning('请选择省')
+    return
+  }
+  if (!socialFormData.city) {
+    ElMessage.warning('请选择市')
+    return
+  }
+
+  if (socialFormData.id) {
+    const index = socialSecurityList.value.findIndex(item => item.id === socialFormData.id)
+    if (index !== -1) {
+      socialSecurityList.value[index] = { ...socialFormData }
+    }
+    ElMessage.success('修改成功')
+  } else {
+    socialFormData.id = Date.now()
+    socialSecurityList.value.push({ ...socialFormData })
+    ElMessage.success('新增成功')
+  }
+  socialDialogVisible.value = false
+}
+
+// 地税数据
+const taxList = ref([
+  { id: 1, name: '北京市地方税务局', centerCode: 'BJ-TAX01', province: '北京', provinceCode: '110000', city: '北京', cityCode: '110100' },
+  { id: 2, name: '上海市地方税务局', centerCode: 'SH-TAX01', province: '上海', provinceCode: '310000', city: '上海', cityCode: '310100' },
+  { id: 3, name: '广州市地方税务局', centerCode: 'GZ-TAX01', province: '广东', provinceCode: '440000', city: '广州', cityCode: '440100' }
+])
+
+const taxDialogVisible = ref(false)
+const taxDialogTitle = ref('新增')
+const taxFormData = reactive({
+  id: null,
+  name: '',
+  centerCode: '',
+  province: '',
+  provinceCode: '',
+  city: '',
+  cityCode: ''
+})
+
+const taxCities = computed(() => {
+  const province = provinces.find(p => p.name === taxFormData.province)
+  return province ? province.cities : []
+})
+
+const handleAddTax = () => {
+  taxDialogTitle.value = '新增'
+  taxFormData.id = null
+  taxFormData.name = ''
+  taxFormData.centerCode = ''
+  taxFormData.province = ''
+  taxFormData.provinceCode = ''
+  taxFormData.city = ''
+  taxFormData.cityCode = ''
+  taxDialogVisible.value = true
+}
+
+const handleEditTax = (row) => {
+  taxDialogTitle.value = '编辑'
+  taxFormData.id = row.id
+  taxFormData.name = row.name
+  taxFormData.centerCode = row.centerCode
+  taxFormData.province = row.province
+  taxFormData.provinceCode = row.provinceCode
+  taxFormData.city = row.city
+  taxFormData.cityCode = row.cityCode
+  taxDialogVisible.value = true
+}
+
+const handleDeleteTax = (row) => {
+  const index = taxList.value.findIndex(item => item.id === row.id)
+  if (index !== -1) {
+    taxList.value.splice(index, 1)
+    ElMessage.success('删除成功')
+  }
+}
+
+const handleTaxProvinceChange = () => {
+  const province = provinces.find(p => p.name === taxFormData.province)
+  if (province) {
+    taxFormData.provinceCode = province.code
+    taxFormData.city = ''
+    taxFormData.cityCode = ''
+  }
+}
+
+const handleTaxCityChange = () => {
+  const province = provinces.find(p => p.name === taxFormData.province)
+  if (province) {
+    const city = province.cities.find(c => c.name === taxFormData.city)
+    if (city) {
+      taxFormData.cityCode = city.code
+    }
+  }
+}
+
+const handleTaxSubmit = () => {
+  if (!taxFormData.name) {
+    ElMessage.warning('请输入地税名称')
+    return
+  }
+  if (!taxFormData.centerCode) {
+    ElMessage.warning('请输入中心编码')
+    return
+  }
+  if (!taxFormData.province) {
+    ElMessage.warning('请选择省')
+    return
+  }
+  if (!taxFormData.city) {
+    ElMessage.warning('请选择市')
+    return
+  }
+
+  if (taxFormData.id) {
+    const index = taxList.value.findIndex(item => item.id === taxFormData.id)
+    if (index !== -1) {
+      taxList.value[index] = { ...taxFormData }
+    }
+    ElMessage.success('修改成功')
+  } else {
+    taxFormData.id = Date.now()
+    taxList.value.push({ ...taxFormData })
+    ElMessage.success('新增成功')
+  }
+  taxDialogVisible.value = false
+}
+
+// 公积金数据
+const fundList = ref([
+  { id: 1, name: '北京住房公积金管理中心', centerCode: 'BJ-FUND01', province: '北京', provinceCode: '110000', city: '北京', cityCode: '110100' },
+  { id: 2, name: '上海住房公积金管理中心', centerCode: 'SH-FUND01', province: '上海', provinceCode: '310000', city: '上海', cityCode: '310100' },
+  { id: 3, name: '广州住房公积金管理中心', centerCode: 'GZ-FUND01', province: '广东', provinceCode: '440000', city: '广州', cityCode: '440100' }
+])
+
+const fundDialogVisible = ref(false)
+const fundDialogTitle = ref('新增')
+const fundFormData = reactive({
+  id: null,
+  name: '',
+  centerCode: '',
+  province: '',
+  provinceCode: '',
+  city: '',
+  cityCode: ''
+})
+
+const fundCities = computed(() => {
+  const province = provinces.find(p => p.name === fundFormData.province)
+  return province ? province.cities : []
+})
+
+const handleAddFund = () => {
+  fundDialogTitle.value = '新增'
+  fundFormData.id = null
+  fundFormData.name = ''
+  fundFormData.centerCode = ''
+  fundFormData.province = ''
+  fundFormData.provinceCode = ''
+  fundFormData.city = ''
+  fundFormData.cityCode = ''
+  fundDialogVisible.value = true
+}
+
+const handleEditFund = (row) => {
+  fundDialogTitle.value = '编辑'
+  fundFormData.id = row.id
+  fundFormData.name = row.name
+  fundFormData.centerCode = row.centerCode
+  fundFormData.province = row.province
+  fundFormData.provinceCode = row.provinceCode
+  fundFormData.city = row.city
+  fundFormData.cityCode = row.cityCode
+  fundDialogVisible.value = true
+}
+
+const handleDeleteFund = (row) => {
+  const index = fundList.value.findIndex(item => item.id === row.id)
+  if (index !== -1) {
+    fundList.value.splice(index, 1)
+    ElMessage.success('删除成功')
+  }
+}
+
+const handleFundProvinceChange = () => {
+  const province = provinces.find(p => p.name === fundFormData.province)
+  if (province) {
+    fundFormData.provinceCode = province.code
+    fundFormData.city = ''
+    fundFormData.cityCode = ''
+  }
+}
+
+const handleFundCityChange = () => {
+  const province = provinces.find(p => p.name === fundFormData.province)
+  if (province) {
+    const city = province.cities.find(c => c.name === fundFormData.city)
+    if (city) {
+      fundFormData.cityCode = city.code
+    }
+  }
+}
+
+const handleFundSubmit = () => {
+  if (!fundFormData.name) {
+    ElMessage.warning('请输入公积金中心名称')
+    return
+  }
+  if (!fundFormData.centerCode) {
+    ElMessage.warning('请输入中心编码')
+    return
+  }
+  if (!fundFormData.province) {
+    ElMessage.warning('请选择省')
+    return
+  }
+  if (!fundFormData.city) {
+    ElMessage.warning('请选择市')
+    return
+  }
+
+  if (fundFormData.id) {
+    const index = fundList.value.findIndex(item => item.id === fundFormData.id)
+    if (index !== -1) {
+      fundList.value[index] = { ...fundFormData }
+    }
+    ElMessage.success('修改成功')
+  } else {
+    fundFormData.id = Date.now()
+    fundList.value.push({ ...fundFormData })
+    ElMessage.success('新增成功')
+  }
+  fundDialogVisible.value = false
+}
+</script>
+
+<style scoped>
+.external-params-container {
+  padding: 20px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.card-header h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.tab-content {
+  padding: 10px;
+}
+</style>

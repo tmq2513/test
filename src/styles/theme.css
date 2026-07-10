@@ -1,0 +1,51 @@
+:root {
+  --el-color-primary: #8b0000;
+  --el-color-primary-light-3: #b22222;
+  --el-color-primary-light-5: #cd5c5c;
+  --el-color-primary-light-7: #f08080;
+  --el-color-primary-light-9: #fce4ec;
+  --el-color-primary-dark-2: #6b0000;
+}
+
+.el-button--primary {
+  --el-button-bg-color: #8b0000;
+  --el-button-hover-bg-color: #a52a2a;
+  --el-button-active-bg-color: #6b0000;
+  --el-button-border-color: #8b0000;
+}
+
+.el-tag--primary {
+  --el-tag-bg-color: #fce4ec;
+  --el-tag-text-color: #8b0000;
+  --el-tag-border-color: #8b0000;
+}
+
+.el-divider__text {
+  color: #8b0000;
+}
+
+.el-menu-item.is-active {
+  background-color: #a52a2a !important;
+}
+
+.el-menu-item:hover {
+  background-color: #a52a2a !important;
+}
+
+.el-input__wrapper.is-focus {
+  box-shadow: 0 0 0 1px #8b0000 inset;
+}
+
+.el-select .el-input__wrapper.is-focus {
+  box-shadow: 0 0 0 1px #8b0000 inset;
+}
+
+.el-radio__input.is-checked .el-radio__inner {
+  background-color: #8b0000;
+  border-color: #8b0000;
+}
+
+.el-checkbox__input.is-checked .el-checkbox__inner {
+  background-color: #8b0000;
+  border-color: #8b0000;
+}
